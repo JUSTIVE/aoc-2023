@@ -1,0 +1,15 @@
+{
+  "name": "typescript",
+  "module": "index.ts",
+  "type": "module",
+  "devDependencies": {
+    "bun-types": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "@mobily/ts-belt": "next",
+    "ts-pattern": "^5.0.5"
+  }
+}
