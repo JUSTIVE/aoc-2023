@@ -1,5 +1,6 @@
 import { A, F, S, flow, pipe } from "@mobily/ts-belt";
 import fs from "fs";
+import { problem, sum } from "../utilities.civet";
 
 stringParser := 
   (fixed: string):string =>
@@ -19,12 +20,11 @@ processLine := (line: string) =>
   |>.replace(/[^0-9]/g, "")
   |>(x) => (x.0 + x.-1)
 
-solve := =>
-  fs.readFileSync `${import.meta.dir}/../../../data/day1/q2.txt`
-  .toString()
-  .split "\n"
-  .map processLine
-  .map Number
-  .reduce((acc, curr) => acc + curr,0)
-  |>console.log
-solve();
+problem(
+  1,
+  (input) =>
+    input
+    .map processLine
+    .map Number
+    |>sum
+)

@@ -1,32 +1,16 @@
 import { P, match } from "ts-pattern";
-import { A, B, F, N, R, S, flow, pipe } from "@mobily/ts-belt";
-import { getSource } from "../utilities";
+import { A, B, S, flow, pipe } from "@mobily/ts-belt";
+import { getSourceLines, problem, sum } from "../utilities";
 type Coord = [number, number];
 export type Part = {
   value: number;
   coord: readonly Coord[];
-  length: number;
 };
 
 export type Symbol = {
   value: string;
   coord: Coord;
 };
-
-const makePart = (
-  value: number,
-  coord: readonly Coord[],
-  length: number
-): Part => ({
-  value,
-  coord,
-  length,
-});
-
-const makeSymbol = (value: string, coord: Coord): Symbol => ({
-  value,
-  coord,
-});
 
 const parseParts = (
   lineNumber: number,
@@ -41,15 +25,14 @@ const parseParts = (
         .with("", () => state)
         .otherwise(() => [
           ...state,
-          makePart(
-            Number(numStack),
-            pipe(
+          {
+            value: Number(numStack),
+            coord: pipe(
               numStack,
               S.split(""),
               A.mapWithIndex((index, _) => [lineNumber, offset - index - 1])
             ),
-            numStack.length
-          ),
+          } satisfies Part,
         ])
     )
     .otherwise(([head, ...tail]) =>
@@ -75,9 +58,9 @@ const parseParts = (
                 "",
                 [
                   ...state,
-                  makePart(
-                    Number(numStack),
-                    pipe(
+                  {
+                    value: Number(numStack),
+                    coord: pipe(
                       numStack,
                       S.split(""),
                       A.mapWithIndex((index, _) => [
@@ -85,8 +68,7 @@ const parseParts = (
                         offset - index - 1,
                       ])
                     ),
-                    numStack.length
-                  ),
+                  },
                 ],
                 tail.join("")
               )
@@ -101,7 +83,7 @@ const parseSymbols = (lineNumber: number, line: string): readonly Symbol[] =>
     A.mapWithIndex((index, char) => [index, char] as const),
     A.filter(([_, char]) => char !== "."),
     A.filter(([_, char]) => !/\d/.test(char)),
-    A.map(([index, char]) => makeSymbol(char, [lineNumber, index]))
+    A.map(([index, char]) => ({ value: char, coord: [lineNumber, index] }))
   );
 
 const isPartAdjacentToSymbol =
@@ -125,11 +107,9 @@ const isPartAdjacentToSymbol =
       )
     );
 
-const solve = async () => {
-  const input = R.getExn(await getSource(3));
+problem(3, (input) => {
   const parts = pipe(
     input,
-    S.split("\n"),
     A.mapWithIndex((lineNumber, line) =>
       parseParts(lineNumber, 0, "", [], line)
     ),
@@ -138,20 +118,16 @@ const solve = async () => {
 
   const symbols = pipe(
     input,
-    S.split("\n"),
     A.mapWithIndex((lineNumber, line) => parseSymbols(lineNumber, line)),
     A.flat
   );
 
-  pipe(
+  return pipe(
     symbols,
     A.filter(({ value }) => value === "*"),
     A.map((symbol) => A.filter(parts, isPartAdjacentToSymbol(symbol))),
     A.filter((parts) => parts.length === 2),
     A.map(([x0, x1]) => x0.value * x1.value),
-    A.reduce(0, (acc, curr) => acc + curr),
-    console.log
+    sum
   );
-};
-
-solve();
+});

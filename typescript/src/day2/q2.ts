@@ -1,5 +1,6 @@
 import { A, F, S, flow, pipe } from "@mobily/ts-belt";
 import fs from "fs";
+import { sum, getSource, getSourceLines, problem } from "../utilities";
 
 type BallColors = "red" | "green" | "blue";
 type GameSet = Record<BallColors, number>;
@@ -28,14 +29,12 @@ const joinGameSet = (acc: GameSet, curr: PartialGameSet): GameSet => ({
   ...curr,
 });
 
-const parseGameSet = (gameSetString: string) =>
-  pipe(
-    gameSetString,
-    S.split(","),
-    A.map(S.trim),
-    A.map(parseBall),
-    A.reduce(BaseGameSet, joinGameSet)
-  );
+const parseGameSet = flow(
+  S.split(","),
+  A.map(S.trim),
+  A.map(parseBall),
+  A.reduce(BaseGameSet, joinGameSet)
+);
 
 const parseGame = (gameString: string): Game => {
   const [tag, setsString] = gameString.split(":");
@@ -55,22 +54,12 @@ const joinGameSetMinimum = (acc: GameSet, curr: GameSet): GameSet => ({
   blue: Math.max(acc.blue, curr.blue),
 });
 
-const calculateMinimumGame = ({ id, set }: Game): MinimumGame => {
-  const set_ = pipe(set, A.reduce(BaseGameSet, joinGameSetMinimum));
-  return { id, set: set_ };
+const calculateMinimumGame = ({ id, set: set_ }: Game): MinimumGame => {
+  const set = pipe(set_, A.reduce(BaseGameSet, joinGameSetMinimum));
+  return { id, set };
 };
 
 const countValue = ({ set: { red, green, blue } }: MinimumGame) =>
   red * green * blue;
 
-const solve = () => {
-  const filePath = `${import.meta.dir}/../../../data/day2/q1.txt`;
-  const input = fs.readFileSync(filePath).toString().split("\n");
-  pipe(
-    input,
-    A.map(flow(parseGame, calculateMinimumGame, countValue)),
-    A.reduce(0, (acc, curr) => acc + curr),
-    console.log
-  );
-};
-solve();
+problem(2, flow(A.map(flow(parseGame, calculateMinimumGame, countValue)), sum));

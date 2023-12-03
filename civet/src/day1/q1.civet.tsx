@@ -1,21 +1,16 @@
 import fs from "fs";
+import { problem,sum } from "../utilities.civet"
 
 const processLine = (line:string) => {
-  return ((arr) => arr[0] + arr[arr.length - 1])(line
+  return ((x) => x[0] + x.at(-1))(line
     .replace(/[^0-9]/g, "")
     .split(""))
 }
 
-const solve = () => { 
-  const input = fs
-    .readFileSync(`${import.meta.dir}/../../../data/day1/q1.txt`)
-    .toString()
-    .split("\n");
-  
-  return console.log(input
+problem(
+  1,
+  (input) => {
+    return sum(input
     .map(processLine)
-    .map(Number)
-    .reduce((acc:number, curr:number) => acc + curr,0))
-}
-
-solve();
+    .map(Number))
+  },)
