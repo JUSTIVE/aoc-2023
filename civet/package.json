@@ -1,0 +1,18 @@
+{
+  "name": "civet",
+  "module": "index.ts",
+  "type": "module",
+  "scripts": {
+    "run": "civet ./src/day${day}/q${question}.civet"
+  },
+  "devDependencies": {
+    "@danielx/civet": "^0.6.52",
+    "bun-types": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "@mobily/ts-belt": "next"
+  }
+}

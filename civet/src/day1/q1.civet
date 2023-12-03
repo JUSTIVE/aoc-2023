@@ -1,0 +1,21 @@
+import fs from "fs";
+
+processLine := (line:string) =>
+  line
+    .replace(/[^0-9]/g, "")
+    .split ""
+  |>(arr) => arr[0] + arr[arr.length - 1]
+
+solve := () => 
+  input := fs
+    .readFileSync `${import.meta.dir}/../../../data/day1/q1.txt`
+    .toString()
+    .split "\n";
+  
+  input
+    .map processLine
+    .map Number
+    .reduce (acc:number, curr:number) => acc + curr,0
+  |>console.log
+
+solve();
