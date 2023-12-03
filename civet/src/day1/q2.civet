@@ -1,0 +1,30 @@
+import { A, F, S, flow, pipe } from "@mobily/ts-belt";
+import fs from "fs";
+
+stringParser := 
+  (fixed: string):string =>
+    fixed.replaceAll("one", "o1e")
+    .replaceAll("two", "t2o")
+    .replaceAll("three", "t3e")
+    .replaceAll("four", "f4r")
+    .replaceAll("five", "f5e")
+    .replaceAll("six", "s6x")
+    .replaceAll("seven", "s7n")
+    .replaceAll("eight", "e8t")
+    .replaceAll("nine", "n9e")
+    
+processLine := (line: string) =>  
+  line
+  |>stringParser
+  |>.replace(/[^0-9]/g, "")
+  |>(x) => (x.0 + x.-1)
+
+solve := =>
+  fs.readFileSync `${import.meta.dir}/../../../data/day1/q2.txt`
+  .toString()
+  .split "\n"
+  .map processLine
+  .map Number
+  .reduce((acc, curr) => acc + curr,0)
+  |>console.log
+solve();
