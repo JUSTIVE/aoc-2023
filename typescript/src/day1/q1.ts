@@ -1,5 +1,5 @@
-import { A, S, pipe } from "@mobily/ts-belt";
-import fs from "fs";
+import { A, F, R, S, flow, pipe } from "@mobily/ts-belt";
+import { getSource } from "../utilities";
 
 const processLine = (line: string) =>
   pipe(
@@ -8,19 +8,21 @@ const processLine = (line: string) =>
     (arr) => arr[0] + arr[arr.length - 1]
   );
 
-const solve = () => {
-  console.log(import.meta.dir);
-  const input = fs
-    .readFileSync(`${import.meta.dir}/../../../data/day1/q1.txt`)
-    .toString()
-    .split("\n");
+const solve = async () => {
+  const input = await getSource(1);
   pipe(
     input,
-    A.map(processLine),
-    A.map(Number),
-    A.tap(console.log),
-    A.reduce(0, (acc, curr) => acc + curr),
-    console.log
+    R.map(
+      flow(
+        F.tap(console.log),
+        S.split("\n"),
+        A.map(processLine),
+        A.map(Number),
+        A.tap(console.log),
+        A.reduce(0, (acc, curr) => acc + curr),
+        console.log
+      )
+    )
   );
 };
 
