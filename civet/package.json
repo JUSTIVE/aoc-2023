@@ -13,6 +13,7 @@
     "typescript": "^5.0.0"
   },
   "dependencies": {
-    "@mobily/ts-belt": "next"
+    "@mobily/ts-belt": "next",
+    "node-fetch": "^3.3.2"
   }
 }
