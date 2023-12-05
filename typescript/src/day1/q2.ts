@@ -4,7 +4,7 @@ import { problem, sum } from '../utilities'
 const stringParser = flow(
   S.replaceAll('one', 'o1e'),
   S.replaceAll('two', 't2o'),
-  S.replaceAll('three', '3e'),
+  S.replaceAll('three', 't3e'),
   S.replaceAll('four', '4'),
   S.replaceAll('five', '5e'),
   S.replaceAll('six', '6'),
