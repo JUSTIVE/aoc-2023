@@ -12,7 +12,6 @@ const massageLine = flow(
   A.at(1),
   O.getExn,
   S.split('|'),
-  A.take(2),
   A.map(parseNumLine)
 ) as (x: string) => [number[], number[]]
 const countMatch = ([a, b]: [number[], number[]]) => A.intersection(a, b).length
