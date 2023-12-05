@@ -1,4 +1,4 @@
-import { A, D, F, N, O, S, flow, pipe } from '@mobily/ts-belt'
+import { A, D, N, O, S, flow, pipe } from '@mobily/ts-belt'
 import { problem, sum } from '../utilities'
 
 const parseNumLine = flow(
@@ -15,12 +15,8 @@ const massageLine = flow(
   A.take(2),
   A.map(parseNumLine)
 ) as (x: string) => [number[], number[]]
-const countMatch = ([a, b]: [number[], number[]]) =>
-  pipe(
-    a,
-    A.filter((x) => A.some(b, F.equals(x))),
-    A.length
-  )
+const countMatch = ([a, b]: [number[], number[]]) => A.intersection(a, b).length
+const oad1 = flow(O.getWithDefault(0), N.add(1))
 
 const evalCard = (
   state: Record<number, number>,
@@ -30,25 +26,9 @@ const evalCard = (
   pipe(
     pipe(matchCount, A.make(cardNum + 1), A.mapWithIndex(N.add)),
     A.reduce(state, (acc, x) =>
-      pipe(
-        acc,
-        D.set(
-          x,
-          pipe(
-            acc,
-            D.get(x),
-            O.getWithDefault(0),
-            N.add((state[`${cardNum}`] ?? 0) + 1)
-          )
-        )
-      )
+      D.update(acc, x, flow(oad1, N.add(state[cardNum] ?? 0)))
     ),
-    (acc) =>
-      D.set(
-        acc,
-        cardNum,
-        pipe(acc, D.get(cardNum), O.getWithDefault(0), N.add(1))
-      )
+    D.update(cardNum, flow(oad1))
   )
 
 const logic = flow(
