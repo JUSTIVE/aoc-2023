@@ -30,7 +30,7 @@ export const problem = async (
 export const problem_ = async (
   day: number,
   logic: (lines: string) => string | number,
-) => pipe(await getSource(day), logic, console.log);
+) => driver(await getSource(day), logic);
 
 export const probe = <T>(x: T) => F.tap<T>((x) => console.log(x))(x);
 
@@ -40,3 +40,10 @@ export const lineDriver = (
   input: string,
   logic: (lines: readonly string[]) => string | number,
 ) => pipe(input, S.split('\n'), logic, console.log);
+
+export const driver = (
+  input: string,
+  logic: (lines: string) => string | number,
+) => pipe(input, logic, console.log);
+
+export const max = (a: number, b: number) => Math.max(a, b);

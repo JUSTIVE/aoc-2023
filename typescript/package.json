@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@mobily/ts-belt": "next",
+    "chalk": "^5.3.0",
     "prettier": "^3.1.0",
     "ts-pattern": "^5.0.5"
   }
