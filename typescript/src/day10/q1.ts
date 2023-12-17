@@ -1,6 +1,6 @@
 import { A, F, O, S, flow, pipe } from '@mobily/ts-belt';
 import { P, match } from 'ts-pattern';
-import { lineDriver, max, probe, problem } from '../utilities';
+import { max, problem } from '../utilities';
 import chalk from 'chalk';
 
 type Coord = [number, number];
@@ -42,11 +42,6 @@ const valueAt = (map: Map) =>
     pipe(blockAt(map)([x, y]), ({ value }) => value),
   );
 
-const distAt =
-  (map: Map) =>
-  ([x, y]: Coord): number =>
-    pipe(blockAt(map)([x, y]), ({ dist }) => dist);
-
 const getNextBlock = (
   { value, coord: [x, y] }: Block,
   map: Map,
@@ -79,10 +74,6 @@ const getNextBlock = (
       .with('L', () => [up, right])
       .otherwise(F.always([])),
     A.filterMap(F.identity),
-    A.filter(
-      ([x, y]) =>
-        x >= 0 && x < (map[0]?.length ?? 0) && y >= 0 && y < map.length,
-    ),
     A.map(blockAt(map)),
     A.filter(({ dist, value }) => dist === -1 || value === '.'),
   );
@@ -130,7 +121,6 @@ function numberToRainbowColor(number: number): {
 const printMap = (map: Map): void =>
   pipe(
     map,
-    // F.tap(console.clear),
     F.tap(() => process.stdout.cursorTo(0, 0)),
     A.map((row) =>
       row
@@ -145,6 +135,7 @@ const printMap = (map: Map): void =>
                 g,
                 b,
               )(
+                // `${dist}`.padStart(2, ' '),
                 value
                   .replaceAll('7', '┓')
                   .replaceAll('L', '┗')
@@ -158,7 +149,6 @@ const printMap = (map: Map): void =>
         .join(''),
     ),
     A.join('\n'),
-
     console.log,
   );
 
@@ -183,11 +173,6 @@ const joinMap = (map: Map, map2: Map): Map => {
   );
 };
 
-const joinTransaction = (map: Map, { coord, dist }: Block): Map => {
-  const prev = distAt(map)(coord);
-  return updateDist(map, coord, prev === -1 ? dist : Math.min(prev, dist));
-};
-
 const walk = (
   map: Map,
   candidates: (readonly Block[])[],
@@ -195,22 +180,22 @@ const walk = (
 ): Map => {
   printMap(map);
 
-  if (A.isEmpty(candidates)) return map;
+  if (A.isEmpty(candidates[0] ?? [])) return map;
+
   const updatedMap = pipe(
     candidates[0] ?? [],
-    // A.reduce(map, joinTransaction),
-    A.map((block) => updateDist(map, block.coord, depth)),
+    A.map(({ coord }) => updateDist(map, coord, depth)),
     A.reduce(map, joinMap),
   );
-  const nextSteps = pipe(
-    candidates[0] ?? [],
-    A.flatMap((block) => getNextBlock(block, updatedMap)),
-  );
+  const nextSteps = [
+    pipe(
+      candidates[0] ?? [],
+      A.flatMap((block) => getNextBlock(block, updatedMap)),
+    ),
+  ];
 
-  const nextCandidates = A.isNotEmpty(nextSteps)
-    ? [nextSteps, ...candidates.slice(1)]
-    : candidates.slice(1);
-  // return walk(updatedMap, nextCandidates, depth + 1);
+  const nextCandidates = [...nextSteps, ...candidates.slice(1)];
+
   return walk(updatedMap, nextCandidates, depth + 1);
 };
 
@@ -226,11 +211,15 @@ const logic = flow(parse, (map) => {
   );
 });
 
-const ip = `..F7.
-.FJ|.
-SJ.L7
-|F--J
-LJ...`;
+// const ip = `..........
+// .S------7.
+// .|F----7|.
+// .||OOOO||.
+// .||OOOO||.
+// .|L-7F-J|.
+// .|II||II|.
+// .L--JL--J.
+// ..........`;
 
 // lineDriver(ip, logic);
 problem(10, logic);
