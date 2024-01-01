@@ -47,3 +47,15 @@ export const driver = (
 ) => pipe(input, logic, console.log);
 
 export const max = (a: number, b: number) => Math.max(a, b);
+
+export const rotateMatrix = (matrix: readonly string[]): readonly string[] => {
+  const rotatedMatrix = [];
+  for (let i = 0; i < matrix.length; i++) {
+    let row = '';
+    for (let j = 0; j < matrix.length; j++) {
+      row += (matrix[j] ?? '')[i];
+    }
+    rotatedMatrix.push(row);
+  }
+  return rotatedMatrix;
+};

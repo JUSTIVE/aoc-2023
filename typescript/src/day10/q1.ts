@@ -87,7 +87,7 @@ const parseLine = (line: string, y: number): readonly Block[] =>
       (x, value) =>
         ({
           coord: [x, y],
-          value: value as any,
+          value: value,
           dist: -1,
         }) as Block,
     ),

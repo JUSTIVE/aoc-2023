@@ -1,5 +1,6 @@
 import { problem,sum } from "../utilities.civet"
-import {S } from "@mobily/ts-belt"
+import { S } from "@mobily/ts-belt"
+
 processLine := (line:string) =>
   line
   |>S.replaceByRe(/[^0-9]/g, "")
