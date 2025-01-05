@@ -1,5 +1,4 @@
-import { A, F, O, S, flow, pipe } from '@mobily/ts-belt';
-import { P, match } from 'ts-pattern';
+import { A, F, O, flow, pipe } from '@mobily/ts-belt';
 import { max, problem } from '../utilities';
 import chalk from 'chalk';
 
@@ -15,82 +14,112 @@ const baseBlock: Block = {
   value: '.',
   dist: -1,
 };
-type Map = readonly (readonly Block[])[];
+type Map = Block[][];
 
-const updateDist = (map: Map, [x, y]: Coord, value: number): Map =>
-  A.updateAt(map, y, (row) =>
-    A.updateAt(row, x, (cell) => ({ ...cell, dist: value })),
-  );
+const updateDist = (map: Map, [x, y]: Coord, value: number): Map => {
+  map[y] =
+    map[y]?.map((row, i) => {
+      if (i === x) {
+        return {
+          ...row,
+          dist: value,
+        };
+      }
+      return row;
+    }) ?? [];
+  return map;
+};
 
-const findStart = (map: readonly (readonly Block[])[]): Coord =>
-  pipe(
-    map,
-    A.flat,
-    A.filter((x) => x.value === 'S'),
-    A.head,
-    O.getExn,
-    (x) => x.coord,
-  );
+const findStart = (map: Block[][]): Coord =>
+  map
+    .flat()
+    .filter((x) => x.value === 'S')
+    .at(0)?.coord ?? [0, 0];
 
-const blockAt =
-  (map: Map) =>
-  ([x, y]: Coord): Block =>
-    pipe(map, A.at(y), O.flatMap(A.at(x)), O.getWithDefault(baseBlock));
+const blockAt = (map: Map, [x, y]: Coord) => map.at(y)?.at(x) ?? baseBlock;
 
-const valueAt = (map: Map) =>
-  F.memoize(([x, y]: Coord): Block['value'] =>
-    pipe(blockAt(map)([x, y]), ({ value }) => value),
-  );
+const valueAt = (map: Map, [x, y]: Coord) =>
+  pipe(blockAt(map, [x, y]), ({ value }) => value);
 
 const getNextBlock = (
   { value, coord: [x, y] }: Block,
   map: Map,
 ): readonly Block[] => {
-  const right = match(valueAt(map)([x + 1, y]))
-    .returnType<O.Option<Coord>>()
-    .with(P.union('-', '7', 'J'), F.always([x + 1, y]))
-    .otherwise(F.always(O.None));
-  const left = match(valueAt(map)([x - 1, y]))
-    .returnType<O.Option<Coord>>()
-    .with(P.union('-', 'L', 'F'), F.always([x - 1, y]))
-    .otherwise(F.always(O.None));
-  const down = match(valueAt(map)([x, y + 1]))
-    .returnType<O.Option<Coord>>()
-    .with(P.union('|', 'J', 'L'), F.always([x, y + 1]))
-    .otherwise(F.always(O.None));
-  const up = match(valueAt(map)([x, y - 1]))
-    .returnType<O.Option<Coord>>()
-    .with(P.union('|', '7', 'F'), F.always([x, y - 1]))
-    .otherwise(F.always(O.None));
-  return pipe(
-    match(value)
-      .returnType<readonly O.Option<Coord>[]>()
-      .with('S', () => [up, down, left, right])
-      .with('-', () => [left, right])
-      .with('|', () => [up, down])
-      .with('F', () => [right, down])
-      .with('J', () => [left, up])
-      .with('7', () => [left, down])
-      .with('L', () => [up, right])
-      .otherwise(F.always([])),
-    A.filterMap(F.identity),
-    A.map(blockAt(map)),
-    A.filter(({ dist, value }) => dist === -1 || value === '.'),
-  );
+  let right: O.Option<Coord> = undefined;
+  switch (valueAt(map, [x + 1, y])) {
+    case '-':
+    case '7':
+    case 'J':
+      right = [x + 1, y] as Coord;
+      break;
+  }
+
+  let left: O.Option<Coord> = undefined;
+  switch (valueAt(map, [x - 1, y])) {
+    case '-':
+    case 'L':
+    case 'F':
+      left = [x - 1, y] as Coord;
+      break;
+  }
+
+  let down: O.Option<Coord> = undefined;
+  switch (valueAt(map, [x, y + 1])) {
+    case '|':
+    case 'J':
+    case 'L':
+      down = [x, y + 1] as Coord;
+      break;
+  }
+
+  let up: O.Option<Coord> = undefined;
+  switch (valueAt(map, [x, y - 1])) {
+    case '|':
+    case '7':
+    case 'F':
+      up = [x, y - 1] as Coord;
+      break;
+  }
+
+  let next: (Coord | undefined)[] = [];
+  switch (value) {
+    case 'S':
+      next = [up, down, left, right];
+      break;
+    case '-':
+      next = [left, right];
+      break;
+    case '|':
+      next = [up, down];
+      break;
+    case 'F':
+      next = [right, down];
+      break;
+    case 'J':
+      next = [left, up];
+      break;
+    case '7':
+      next = [left, down];
+      break;
+    case 'L':
+      next = [up, right];
+      break;
+  }
+
+  return next
+    .filter((x) => x !== undefined)
+    .map((x) => blockAt(map, x))
+    .filter(({ dist }) => dist === -1);
 };
 
 const parseLine = (line: string, y: number): readonly Block[] =>
-  pipe(
-    line,
-    S.split(''),
-    A.mapWithIndex(
-      (x, value) =>
-        ({
-          coord: [x, y],
-          value: value,
-          dist: -1,
-        }) as Block,
-    ),
+  line.split('').map(
+    (value, x) =>
+      ({
+        coord: [x, y],
+        value: value,
+        dist: -1,
+      }) as Block,
   );
 
 const parse = A.mapWithIndex<string, readonly Block[]>((y, line) =>
@@ -118,11 +147,11 @@ function numberToRainbowColor(number: number): {
 
   return { r, g, b };
 }
-const printMap = (map: Map): void =>
-  pipe(
-    map,
-    F.tap(() => process.stdout.cursorTo(0, 0)),
-    A.map((row) =>
+const printMap = (map: Map): void => {
+  process.stdout.cursorTo(0, 0);
+
+  const x = map
+    .map((row) =>
       row
         // .map(({ dist }) => `${dist}`.padStart(2, ' '))
         .map(({ dist, value }) => {
@@ -135,7 +164,6 @@ const printMap = (map: Map): void =>
                 g,
                 b,
               )(
-                // `${dist}`.padStart(2, ' '),
                 value
                   .replaceAll('7', '┓')
                   .replaceAll('L', '┗')
@@ -147,29 +175,24 @@ const printMap = (map: Map): void =>
         })
         .map((x) => chalk.green(x))
         .join(''),
-    ),
-    A.join('\n'),
-    console.log,
-  );
-
+    )
+    .join('\n');
+  console.log(x);
+};
 const joinMap = (map: Map, map2: Map): Map => {
-  return pipe(
-    map,
-    A.zip(map2),
-    A.map(([row, row2]) =>
-      pipe(
-        A.zip(row, row2),
-        A.map(([block1, block2]) => ({
-          ...block1,
-          dist: match([block1.dist, block2.dist])
-            .with([-1, -1], F.always(-1))
-            .with([-1, P.number], ([, b]) => b)
-            .with([P.number, -1], ([a]) => a)
-            .with([P.number, P.number], ([a, b]) => Math.min(a, b))
-            .exhaustive(),
-        })),
-      ),
-    ),
+  return A.zip(map, map2).map(([row, row2]) =>
+    A.zip(row, row2).map(([block1, block2]) => {
+      let dist = -1;
+      if (block1.dist === -1 && block2.dist === -1) {
+        dist = -1;
+      } else if (block1.dist === -1) dist = block2.dist;
+      else if (block2.dist === -1) dist = block1.dist;
+      else dist = Math.min(block1.dist, block2.dist);
+      return {
+        ...block1,
+        dist,
+      };
+    }),
   );
 };
 
@@ -180,27 +203,23 @@ const walk = (
 ): Map => {
   printMap(map);
 
-  if (A.isEmpty(candidates[0] ?? [])) return map;
+  if ((candidates[0]?.length ?? 0) === 0) return map;
 
-  const updatedMap = pipe(
-    candidates[0] ?? [],
-    A.map(({ coord }) => updateDist(map, coord, depth)),
-    A.reduce(map, joinMap),
-  );
+  const updatedMap = (candidates[0] ?? [])
+    .map(({ coord }) => updateDist(map, coord, depth))
+    .reduce(joinMap, map);
+
   const nextSteps = [
-    pipe(
-      candidates[0] ?? [],
-      A.flatMap((block) => getNextBlock(block, updatedMap)),
-    ),
+    (candidates[0] ?? []).flatMap((block) => getNextBlock(block, updatedMap)),
   ];
 
-  const nextCandidates = [...nextSteps, ...candidates.slice(1)];
+  const nextCandidates = nextSteps.concat(candidates.slice(1));
 
   return walk(updatedMap, nextCandidates, depth + 1);
 };
 
 const logic = flow(parse, (map) => {
-  const start = pipe(map, findStart, blockAt(map));
+  const start = pipe(findStart(map), (x) => blockAt(map, x));
 
   return pipe(
     walk(map, [[start]], 0),
