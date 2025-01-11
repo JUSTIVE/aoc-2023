@@ -46,7 +46,7 @@ export const driver = (
   logic: (lines: string) => string | number,
 ) => pipe(input, logic, console.log);
 
-export const max = (a: number, b: number) => Math.max(a, b);
+export const max = (a: number, b: number) => (a > b ? a : b);
 
 export const rotateMatrix = (matrix: readonly string[]): readonly string[] => {
   const rotatedMatrix = [];
